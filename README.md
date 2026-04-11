@@ -14,6 +14,8 @@ This is useful when you want a readable record of a Codex session after restarti
 ## Repository Layout
 
 - `codex_session_to_markdown.py`: converts one Codex session `.jsonl` file into Markdown
+- `list-codex-convos.sh`: prints the 10 most recent Codex session `.jsonl` files
+- `get-codex-convo.sh`: exports a chosen session, or the newest one by default
 - `convos/`: default output directory for generated Markdown transcripts
 
 ## Requirements
@@ -26,19 +28,31 @@ This is useful when you want a readable record of a Codex session after restarti
 Convert a specific session file:
 
 ```bash
+~/Projects/codex-convos/get-codex-convo.sh \
+  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
+```
+
+Export the newest available session file:
+
+```bash
+~/Projects/codex-convos/get-codex-convo.sh
+```
+
+List the 10 newest session files:
+
+```bash
+~/Projects/codex-convos/list-codex-convos.sh
+```
+
+If you want direct control of the underlying Python converter, it still works:
+
+```bash
 python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
   ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl \
   -o ~/Projects/codex-convos/convos/session.md
 ```
 
-Print the Markdown to stdout instead of writing a file:
-
-```bash
-python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
-  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
-```
-
-Skip command history and only export the conversation:
+You can also skip command history and export only the conversation:
 
 ```bash
 python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
@@ -47,97 +61,32 @@ python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
   -o ~/Projects/codex-convos/convos/session.md
 ```
 
-## Shell Function
+## Shell Integration
 
 Add this to your shell config, for example `~/.bashrc`:
 
 ```bash
-function getcodexconvo() {
-    local converter=~/Projects/codex-convos/codex_session_to_markdown.py
-    local sessions_root=~/.codex/sessions
-    local output_dir=~/Projects/codex-convos/convos
-    local input_jsonl
-    local output_md
-    local latest
+function getcc() {
+    local repo=~/Projects/codex-convos
+    local selected
 
-    if [[ ! -f "$converter" ]]; then
-        echo "Converter script not found: $converter" >&2
-        return 1
-    fi
+    selected="$("$repo/list-codex-convos.sh" | fzf)" || return 1
+    [[ -n "$selected" ]] || return 1
 
-    if [[ $# -gt 1 ]]; then
-        echo "Usage: getcodexconvo [session.jsonl]" >&2
-        return 1
-    fi
-
-    if [[ $# -eq 1 ]]; then
-        input_jsonl="$1"
-    else
-        latest=$(
-            find "$sessions_root" -type f -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null \
-            | sort -nr \
-            | head -n1 \
-            | cut -d' ' -f2-
-        )
-
-        if [[ -z "$latest" ]]; then
-            echo "No session .jsonl files found under $sessions_root" >&2
-            return 1
-        fi
-
-        input_jsonl="$latest"
-    fi
-
-    if [[ ! -f "$input_jsonl" ]]; then
-        echo "Input file not found: $input_jsonl" >&2
-        return 1
-    fi
-
-    mkdir -p "$output_dir" || return 1
-
-    output_md="$output_dir/$(basename "${input_jsonl%.jsonl}").md"
-
-    python3 "$converter" "$input_jsonl" -o "$output_md" || return 1
-
-    echo "$output_md"
+    "$repo/get-codex-convo.sh" "$selected"
 }
 ```
 
 After reloading your shell:
 
 ```bash
-getcodexconvo
+getcc
 ```
 
-That exports the newest session under `~/.codex/sessions` to:
+That shows the 10 most recent session files in `fzf`, lets you choose one, then exports it to:
 
 ```text
 ~/Projects/codex-convos/convos/<same-session-name>.md
-```
-
-You can also pass a specific `.jsonl` file:
-
-```bash
-getcodexconvo ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
-```
-
-To list the 10 most recent Codex session files, add this function as well:
-
-```bash
-function listcodexconvos() {
-    local sessions_root=~/.codex/sessions
-
-    find "$sessions_root" -type f -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null \
-        | sort -nr \
-        | head -n 10 \
-        | cut -d' ' -f2-
-}
-```
-
-Usage:
-
-```bash
-listcodexconvos
 ```
 
 ## Git Setup
