@@ -121,6 +121,25 @@ You can also pass a specific `.jsonl` file:
 getcodexconvo ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
 ```
 
+To list the 10 most recent Codex session files, add this function as well:
+
+```bash
+function listcodexconvos() {
+    local sessions_root=~/.codex/sessions
+
+    find "$sessions_root" -type f -name '*.jsonl' -printf '%T@ %p\n' 2>/dev/null \
+        | sort -nr \
+        | head -n 10 \
+        | cut -d' ' -f2-
+}
+```
+
+Usage:
+
+```bash
+listcodexconvos
+```
+
 ## Git Setup
 
 Initialize and connect the repo:
