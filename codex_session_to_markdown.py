@@ -90,6 +90,10 @@ def render_message_body(entry: Entry) -> str:
         escaped = html.escape(entry.body)
         return f'<div style="color: #06c; white-space: pre-wrap;">{escaped}</div>'
 
+    if entry.title == "🤖 Codex":
+        escaped = html.escape(entry.body)
+        return f'<div style="color: #c90; white-space: pre-wrap;">{escaped}</div>'
+
     return entry.body
 
 
