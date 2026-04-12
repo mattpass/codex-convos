@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import shlex
 import sys
@@ -55,19 +56,6 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def extract_text(content: list[dict[str, Any]] | None) -> str:
-    if not content:
-        return ""
-
-    parts: list[str] = []
-    for item in content:
-        item_type = item.get("type")
-        text = item.get("text")
-        if item_type in {"input_text", "output_text"} and text:
-            parts.append(text)
-    return "\n\n".join(part for part in parts if part.strip())
-
-
 def format_ts(raw: str | None) -> str:
     if not raw:
         return ""
@@ -94,6 +82,17 @@ def make_fence(text: str, info: str = "") -> str:
     return f"{header}\n{text.rstrip()}\n{fence}"
 
 
+def render_message_body(entry: Entry) -> str:
+    if not entry.body:
+        return "_Empty message_"
+
+    if entry.title == "🙂 Matt":
+        escaped = html.escape(entry.body)
+        return f'<div style="color: #06c; white-space: pre-wrap;">{escaped}</div>'
+
+    return entry.body
+
+
 def build_entries(rows: list[dict[str, Any]], skip_commands: bool) -> tuple[dict[str, Any], list[Entry]]:
     session_meta: dict[str, Any] = {}
     entries: list[Entry] = []
@@ -113,7 +112,7 @@ def build_entries(rows: list[dict[str, Any]], skip_commands: bool) -> tuple[dict
                 Entry(
                     timestamp=timestamp,
                     kind="message",
-                    title="User",
+                    title="🙂 Matt",
                     body=payload.get("message", "").strip(),
                     meta={},
                 )
@@ -125,7 +124,7 @@ def build_entries(rows: list[dict[str, Any]], skip_commands: bool) -> tuple[dict
                 Entry(
                     timestamp=timestamp,
                     kind="message",
-                    title="Assistant",
+                    title="🤖 Codex",
                     body=payload.get("message", "").strip(),
                     meta={"phase": payload.get("phase")},
                 )
@@ -204,14 +203,11 @@ def render_markdown(
 
         ts = format_ts(entry.timestamp)
         if ts:
-            lines.append(f"_Timestamp: `{ts}`_")
+            lines.append(f"_{ts}_")
             lines.append("")
 
         if entry.kind == "message":
-            if entry.body:
-                lines.append(entry.body)
-            else:
-                lines.append("_Empty message_")
+            lines.append(render_message_body(entry))
             lines.append("")
             continue
 
