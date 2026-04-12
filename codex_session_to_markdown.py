@@ -300,7 +300,8 @@ def render_markdown(
     for entry in entries:
         if entry.kind == "command":
             command_names = entry.meta.get("command_names") or []
-            lines.append(render_command_heading(entry.title, command_names))
+            prefix = "🔍 Command" if is_collapsible_low_signal_command(entry.body) else "✏️ Command"
+            lines.append(render_command_heading(prefix, command_names))
         else:
             lines.append(f"### {entry.title}")
         lines.append("")
