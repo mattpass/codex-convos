@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import re
 import shlex
 import sys
 from dataclasses import dataclass
@@ -82,6 +83,89 @@ def make_fence(text: str, info: str = "") -> str:
     return f"{header}\n{text.rstrip()}\n{fence}"
 
 
+def extract_shell_inner(command_text: str) -> str:
+    shell_prefix = "/bin/bash -lc "
+    if command_text.startswith(shell_prefix):
+        quoted = command_text[len(shell_prefix) :]
+        try:
+            parts = shlex.split(quoted)
+            if parts:
+                return parts[0]
+        except ValueError:
+            return quoted
+    return command_text
+
+
+def extract_command_names(command_text: str) -> list[str]:
+    inner = extract_shell_inner(command_text).strip()
+    if not inner:
+        return []
+
+    lexer = shlex.shlex(inner, posix=True, punctuation_chars="|;&")
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    tokens = list(lexer)
+
+    segments: list[list[str]] = [[]]
+    separators = {"|", "||", ";", "&&"}
+
+    for token in tokens:
+        if token in separators:
+            if segments[-1]:
+                segments.append([])
+            continue
+        segments[-1].append(token)
+
+    names: list[str] = []
+
+    for segment in segments:
+        if not segment:
+            continue
+
+        for token in segment:
+            if "=" in token and not token.startswith(("/", "./")) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", token):
+                continue
+            if token in {"sudo", "env", "command", "builtin", "nohup", "time"}:
+                continue
+            names.append(Path(token).name)
+            break
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for name in names:
+        if name not in seen:
+            deduped.append(name)
+            seen.add(name)
+    return deduped
+
+
+def is_collapsible_low_signal_command(command_text: str) -> bool:
+    inner = extract_shell_inner(command_text).strip()
+    if not inner:
+        return False
+
+    command_names = extract_command_names(command_text)
+    if not command_names:
+        return False
+
+    allowed = {"sed", "cat", "head", "tail", "rg", "find", "ls", "pwd", "nl", "sort"}
+    if all(name in allowed for name in command_names):
+        return True
+
+    patterns = (
+        r"^sed\s+-n\s+['\"]?\d",
+        r"^cat\s+",
+        r"^head\s+",
+        r"^tail\s+",
+        r"^rg\s+--files(?:\s|$)",
+        r"^find\s+",
+        r"^ls(?:\s|$)",
+        r"^pwd(?:\s|$)",
+        r"^nl\s+",
+    )
+    return any(re.match(pattern, inner) for pattern in patterns)
+
+
 def render_message_body(entry: Entry) -> str:
     if not entry.body:
         return "_Empty message_"
@@ -95,6 +179,16 @@ def render_message_body(entry: Entry) -> str:
         return f'<div style="color: #c90; white-space: pre-wrap;">{escaped}</div>'
 
     return entry.body
+
+
+def render_command_heading(title: str, command_names: list[str]) -> str:
+    if not command_names:
+        return f"### {title}"
+
+    rendered_names = ", ".join(
+        f'<span style="color: #c90;">{html.escape(name)}</span>' for name in command_names
+    )
+    return f"### {title} [{rendered_names}]"
 
 
 def build_entries(rows: list[dict[str, Any]], skip_commands: bool) -> tuple[dict[str, Any], list[Entry]]:
@@ -141,8 +235,10 @@ def build_entries(rows: list[dict[str, Any]], skip_commands: bool) -> tuple[dict
         if row_type == "event_msg" and payload_type == "exec_command_end":
             command_text = format_command(payload.get("command"))
             output = payload.get("aggregated_output") or ""
+            command_names = extract_command_names(command_text)
             meta = {
                 "cwd": payload.get("cwd"),
+                "command_names": command_names,
                 "exit_code": payload.get("exit_code"),
                 "status": payload.get("status"),
             }
@@ -202,7 +298,11 @@ def render_markdown(
         return "\n".join(lines) + "\n"
 
     for entry in entries:
-        lines.append(f"### {entry.title}")
+        if entry.kind == "command":
+            command_names = entry.meta.get("command_names") or []
+            lines.append(render_command_heading(entry.title, command_names))
+        else:
+            lines.append(f"### {entry.title}")
         lines.append("")
 
         ts = format_ts(entry.timestamp)
@@ -216,25 +316,36 @@ def render_markdown(
             continue
 
         if entry.kind == "command":
-            lines.append(make_fence(entry.body, "bash"))
-            lines.append("")
+            command_lines: list[str] = []
+            command_lines.append(make_fence(entry.body, "bash"))
+            command_lines.append("")
 
             cwd = entry.meta.get("cwd")
             status = entry.meta.get("status")
             exit_code = entry.meta.get("exit_code")
             if cwd:
-                lines.append(f"- CWD: `{cwd}`")
-            lines.append(f"- Status: `{status}`")
-            lines.append(f"- Exit code: `{exit_code}`")
-            lines.append("")
+                command_lines.append(f"- CWD: `{cwd}`")
+            command_lines.append(f"- Status: `{status}`")
+            command_lines.append(f"- Exit code: `{exit_code}`")
+            command_lines.append("")
 
             output = entry.meta.get("output", "")
             if output.strip():
-                lines.append("Output:")
-                lines.append(make_fence(output, "text"))
+                command_lines.append("Output:")
+                command_lines.append(make_fence(output, "text"))
             else:
-                lines.append("Output: `_none_`")
-            lines.append("")
+                command_lines.append("Output: `_none_`")
+            command_lines.append("")
+
+            if is_collapsible_low_signal_command(entry.body):
+                lines.append("<details>")
+                lines.append("<summary>Low-signal read/discovery command</summary>")
+                lines.append("")
+                lines.extend(command_lines)
+                lines.append("</details>")
+                lines.append("")
+            else:
+                lines.extend(command_lines)
 
     return "\n".join(lines).rstrip() + "\n"
 
