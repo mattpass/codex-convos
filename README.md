@@ -38,7 +38,14 @@ Export the newest available session file:
 ~/Projects/codex-convos/get-codex-convo.sh
 ```
 
-List the 10 newest session files:
+Export a session and open the generated Markdown in Chrome:
+
+```bash
+~/Projects/codex-convos/get-codex-convo.sh --open \
+  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
+```
+
+List the 10 newest session files with a readable label and the underlying path:
 
 ```bash
 ~/Projects/codex-convos/list-codex-convos.sh
@@ -69,11 +76,13 @@ Add this to your shell config, for example `~/.bashrc`:
 function getcc() {
     local repo=~/Projects/codex-convos
     local selected
+    local path
 
-    selected="$("$repo/list-codex-convos.sh" | fzf)" || return 1
+    selected="$("$repo/list-codex-convos.sh" | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1)" || return 1
     [[ -n "$selected" ]] || return 1
 
-    "$repo/get-codex-convo.sh" "$selected"
+    path="${selected##*$'\t'}"
+    "$repo/get-codex-convo.sh" --open "$path"
 }
 ```
 
@@ -87,6 +96,12 @@ That shows the 10 most recent session files in `fzf`, lets you choose one, then 
 
 ```text
 ~/Projects/codex-convos/convos/<same-session-name>.md
+```
+
+The `fzf` list is newest-first, with the newest session at the top and initially selected. The orange timestamp shown is the session file's modified time, so the displayed order matches the sort order. Each entry is shown like:
+
+```text
+12th Apr @ 14:59:32 : When I do this and that...
 ```
 
 ## Git Setup

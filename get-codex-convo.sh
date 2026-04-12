@@ -6,6 +6,12 @@ repo_dir="${HOME}/Projects/codex-convos"
 converter="${repo_dir}/codex_session_to_markdown.py"
 list_script="${repo_dir}/list-codex-convos.sh"
 output_dir="${repo_dir}/convos"
+open_browser=0
+
+if [[ "${1:-}" == "--open" ]]; then
+    open_browser=1
+    shift
+fi
 
 if [[ ! -f "$converter" ]]; then
     echo "Converter script not found: $converter" >&2
@@ -13,7 +19,7 @@ if [[ ! -f "$converter" ]]; then
 fi
 
 if [[ $# -gt 1 ]]; then
-    echo "Usage: get-codex-convo.sh [session.jsonl]" >&2
+    echo "Usage: get-codex-convo.sh [--open] [session.jsonl]" >&2
     exit 1
 fi
 
@@ -25,7 +31,8 @@ else
         exit 1
     fi
 
-    input_jsonl="$("$list_script" | head -n 1)"
+    selected_line="$("$list_script" | head -n 1)"
+    input_jsonl="${selected_line##*$'\t'}"
 
     if [[ -z "$input_jsonl" ]]; then
         echo "No session .jsonl files found under ${HOME}/.codex/sessions" >&2
@@ -43,5 +50,15 @@ mkdir -p "$output_dir"
 output_md="${output_dir}/$(basename "${input_jsonl%.jsonl}").md"
 
 python3 "$converter" "$input_jsonl" -o "$output_md"
+
+if [[ $open_browser -eq 1 ]]; then
+    if command -v google-chrome >/dev/null 2>&1; then
+        nohup google-chrome "$output_md" >/dev/null 2>&1 &
+    elif command -v google-chrome-stable >/dev/null 2>&1; then
+        nohup google-chrome-stable "$output_md" >/dev/null 2>&1 &
+    elif command -v xdg-open >/dev/null 2>&1; then
+        nohup xdg-open "$output_md" >/dev/null 2>&1 &
+    fi
+fi
 
 echo "$output_md"
