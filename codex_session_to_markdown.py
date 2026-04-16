@@ -83,16 +83,46 @@ def make_fence(text: str, info: str = "") -> str:
     return f"{header}\n{text.rstrip()}\n{fence}"
 
 
+def is_shell_executable(token: str) -> bool:
+    return Path(token).name in {"bash", "zsh", "sh"}
+
+
 def extract_shell_inner(command_text: str) -> str:
-    shell_prefix = "/bin/bash -lc "
-    if command_text.startswith(shell_prefix):
-        quoted = command_text[len(shell_prefix) :]
-        try:
-            parts = shlex.split(quoted)
-            if parts:
-                return parts[0]
-        except ValueError:
-            return quoted
+    try:
+        parts = shlex.split(command_text)
+    except ValueError:
+        return command_text
+
+    if not parts:
+        return command_text
+
+    start_index = 0
+    while start_index < len(parts) and parts[start_index] in {
+        "env",
+        "/usr/bin/env",
+        "command",
+        "builtin",
+        "nohup",
+        "time",
+    }:
+        start_index += 1
+
+    if start_index >= len(parts):
+        return command_text
+
+    shell_index = start_index
+    if not is_shell_executable(parts[shell_index]):
+        return command_text
+
+    if shell_index + 2 >= len(parts):
+        return command_text
+
+    shell_flag = parts[shell_index + 1]
+    if shell_flag not in {"-c", "-lc", "-ic"}:
+        return command_text
+
+    return parts[shell_index + 2]
+
     return command_text
 
 
@@ -126,6 +156,8 @@ def extract_command_names(command_text: str) -> list[str]:
             if "=" in token and not token.startswith(("/", "./")) and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", token):
                 continue
             if token in {"sudo", "env", "command", "builtin", "nohup", "time"}:
+                continue
+            if token.startswith("-"):
                 continue
             names.append(Path(token).name)
             break
