@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-repo_dir="${HOME}/Projects/codex-convos"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_dir="$script_dir"
 converter="${repo_dir}/codex_session_to_markdown.py"
 list_script="${repo_dir}/list-codex-convos.sh"
 output_dir="${repo_dir}/convos"
@@ -52,12 +53,20 @@ output_md="${output_dir}/$(basename "${input_jsonl%.jsonl}").md"
 python3 "$converter" "$input_jsonl" -o "$output_md"
 
 if [[ $open_browser -eq 1 ]]; then
-    if command -v google-chrome >/dev/null 2>&1; then
-        nohup google-chrome "$output_md" >/dev/null 2>&1 &
-    elif command -v google-chrome-stable >/dev/null 2>&1; then
-        nohup google-chrome-stable "$output_md" >/dev/null 2>&1 &
-    elif command -v xdg-open >/dev/null 2>&1; then
-        nohup xdg-open "$output_md" >/dev/null 2>&1 &
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        if [[ -d "/Applications/Google Chrome.app" ]] || [[ -d "${HOME}/Applications/Google Chrome.app" ]]; then
+            nohup open -a "Google Chrome" "$output_md" >/dev/null 2>&1 &
+        elif command -v open >/dev/null 2>&1; then
+            nohup open "$output_md" >/dev/null 2>&1 &
+        fi
+    else
+        if command -v google-chrome >/dev/null 2>&1; then
+            nohup google-chrome "$output_md" >/dev/null 2>&1 &
+        elif command -v google-chrome-stable >/dev/null 2>&1; then
+            nohup google-chrome-stable "$output_md" >/dev/null 2>&1 &
+        elif command -v xdg-open >/dev/null 2>&1; then
+            nohup xdg-open "$output_md" >/dev/null 2>&1 &
+        fi
     fi
 fi
 
