@@ -22,6 +22,14 @@ This is useful when you want a readable record of a Codex session after restarti
 
 - Python 3
 - Codex CLI sessions already present under `~/.codex/sessions`
+- `fzf` if you want the interactive `getcc` selector function
+
+## OS Compatibility
+
+The scripts are intended to work on both Linux and macOS.
+
+- `--open` prefers Google Chrome on both platforms and falls back to the platform default opener if Chrome is unavailable
+- the `getcc` shell helper below is written to work in `zsh` as well as `bash`
 
 ## Basic Usage
 
@@ -70,19 +78,19 @@ python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
 
 ## Shell Integration
 
-Add this to your shell config, for example `~/.bashrc`:
+Add this to your shell config, for example `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 function getcc() {
     local repo=~/Projects/codex-convos
     local selected
-    local path
+    local convo_path
 
     selected="$("$repo/list-codex-convos.sh" | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1)" || return 1
     [[ -n "$selected" ]] || return 1
 
-    path="${selected##*$'\t'}"
-    "$repo/get-codex-convo.sh" --open "$path"
+    convo_path="${selected##*$'\t'}"
+    "$repo/get-codex-convo.sh" --open "$convo_path"
 }
 ```
 
