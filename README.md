@@ -82,6 +82,8 @@ The `fzf` list is newest-first, with the newest session at the top and initially
 12th Apr @ 14:59:32 : When I do this and that...
 ```
 
+On selecting one of the Codex conversations it converts it to Markdown and opens it in Chrome.
+
 ## Basic Usage - Individual Files
 
 Convert a specific session file:
