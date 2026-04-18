@@ -86,24 +86,24 @@ On selecting one of the Codex conversations it converts it to Markdown and opens
 
 ## Basic Usage - Individual Files
 
-Convert a specific session file:
-
-```bash
-~/Projects/codex-convos/get-codex-convo.sh \
-  ~/.codex/sessions/2026/04/11/<filename>..jsonl
-```
-
 Export the newest available session file:
 
 ```bash
 ~/Projects/codex-convos/get-codex-convo.sh
 ```
 
+Convert a specific session file:
+
+```bash
+~/Projects/codex-convos/get-codex-convo.sh \
+  ~/.codex/sessions/2026/04/11/<filename>.jsonl
+```
+
 Export a session and open the generated Markdown in Chrome:
 
 ```bash
 ~/Projects/codex-convos/get-codex-convo.sh --open \
-  ~/.codex/sessions/2026/04/11/<filename>..jsonl
+  ~/.codex/sessions/2026/04/11/<filename>.jsonl
 ```
 
 List the 10 newest session files with a readable label and the underlying path:
@@ -116,7 +116,7 @@ If you want direct control of the underlying Python converter, it still works:
 
 ```bash
 python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
-  ~/.codex/sessions/2026/04/11/<filename>..jsonl \
+  ~/.codex/sessions/2026/04/11/<filename>.jsonl \
   -o ~/Projects/codex-convos/convos/session.md
 ```
 
