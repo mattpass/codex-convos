@@ -21,7 +21,7 @@ It collapses low value read/discovery "noise" commands (such as `sed`, `rg` etc)
 
 <img width="1956" height="531" alt="image" src="https://github.com/user-attachments/assets/4438bccb-9d44-49e4-88eb-20b8e5694d97" />
 
-Other commands are shown not in a collapsed area.
+Other more useful commands to view are not shown in a collapsed area.
 
 <img width="1956" height="1492" alt="image" src="https://github.com/user-attachments/assets/c0c563b1-34d7-4a0a-a642-e2d6a739067f" />
 
