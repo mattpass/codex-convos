@@ -23,7 +23,7 @@ It collapses low value read/discovery "noise" commands (such as `sed`, `rg` etc)
 
 Other commands are shown not in a collapsed area.
 
-<img width="1956" height="1492" alt="image" src="https://github.com/user-attachments/ets/be553a93-831f-4ee4-9019-b75ee331fd51" />
+<img width="1956" height="1492" alt="image" src="https://github.com/user-attachments/assets/c0c563b1-34d7-4a0a-a642-e2d6a739067f" />
 
 ## Repository Layout
 
