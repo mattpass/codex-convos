@@ -11,6 +11,13 @@ The converter reads a Codex `.jsonl` session file and renders:
 
 This is useful when you want a readable record of a Codex session after restarting your machine, resuming a session, or closing the TUI.
 
+Here's an example of working on some changes on Codex Convos itself:
+
+<img width="1956" height="3037" alt="image" src="https://github.com/user-attachments/assets/a7b56b47-7a73-4f2f-a632-050ae65b720b" />
+
+
+Here you can see part of the exported conversation, Codex comments in yellow, user comments in blue. It collapses low value read/discovery commands (such as `sed`, `rg` etc) which it uses to read files but those are viewable by expanding. Other commands are shown normally.
+
 ## Repository Layout
 
 - `codex_session_to_markdown.py`: converts one Codex session `.jsonl` file into Markdown
