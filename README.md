@@ -17,7 +17,7 @@ Below you can see part of the exported conversation, Codex comments in yellow, u
 
 <img width="1956" height="728" alt="image" src="https://github.com/user-attachments/assets/ccf97eaa-22bd-49a4-8726-e0b3424725e6" />
 
-It collapses low value read/discovery "noise" commands (such as `sed`, `rg` etc) which it uses to read files but those are viewable by expanding.
+It collapses low value read/discovery "noise" commands (such as `sed`, `rg` etc) which it uses to read files and those are then viewable by expanding the section.
 
 <img width="1956" height="531" alt="image" src="https://github.com/user-attachments/assets/4438bccb-9d44-49e4-88eb-20b8e5694d97" />
 
