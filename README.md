@@ -1,4 +1,4 @@
-# codexconvos
+# Codex Convos
 
 Convert local Codex session archives from `~/.codex/sessions` into readable Markdown transcripts.
 
@@ -31,54 +31,10 @@ The scripts are intended to work on both Linux and macOS.
 - `--open` prefers Google Chrome on both platforms and falls back to the platform default opener if Chrome is unavailable
 - the `getcc` shell helper below is written to work in `zsh` as well as `bash`
 
-## Basic Usage
 
-Convert a specific session file:
+## Basic Usage - Shell Integration
 
-```bash
-~/Projects/codex-convos/get-codex-convo.sh \
-  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
-```
-
-Export the newest available session file:
-
-```bash
-~/Projects/codex-convos/get-codex-convo.sh
-```
-
-Export a session and open the generated Markdown in Chrome:
-
-```bash
-~/Projects/codex-convos/get-codex-convo.sh --open \
-  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl
-```
-
-List the 10 newest session files with a readable label and the underlying path:
-
-```bash
-~/Projects/codex-convos/list-codex-convos.sh
-```
-
-If you want direct control of the underlying Python converter, it still works:
-
-```bash
-python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
-  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl \
-  -o ~/Projects/codex-convos/convos/session.md
-```
-
-You can also skip command history and export only the conversation:
-
-```bash
-python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
-  ~/.codex/sessions/2026/04/11/rollout-2026-04-11T21-23-11-019d7e36-73aa-7ab1-8853-c88e394d4d13.jsonl \
-  --skip-commands \
-  -o ~/Projects/codex-convos/convos/session.md
-```
-
-## Shell Integration
-
-Add this to your shell config, for example `~/.bashrc` or `~/.zshrc`:
+Add this to your shell config, for example `~/.bashrc` or `~/.zshrc` and change `~/Projects/codex-convos` as needed:
 
 ```bash
 function getcc() {
@@ -112,25 +68,48 @@ The `fzf` list is newest-first, with the newest session at the top and initially
 12th Apr @ 14:59:32 : When I do this and that...
 ```
 
-## Git Setup
+## Basic Usage - Individual Files
 
-Initialize and connect the repo:
-
-```bash
-cd ~/Projects/codex-convos
-git remote add origin git@github.com:mattpass/codexconvos.git
-```
-
-Then commit and push:
+Convert a specific session file:
 
 ```bash
-git add .
-git commit -m "Initial codex session exporter"
-git push -u origin main
+~/Projects/codex-convos/get-codex-convo.sh \
+  ~/.codex/sessions/2026/04/11/<filename>..jsonl
 ```
 
-If your default branch is still `master`, rename it first:
+Export the newest available session file:
 
 ```bash
-git branch -M main
+~/Projects/codex-convos/get-codex-convo.sh
 ```
+
+Export a session and open the generated Markdown in Chrome:
+
+```bash
+~/Projects/codex-convos/get-codex-convo.sh --open \
+  ~/.codex/sessions/2026/04/11/<filename>..jsonl
+```
+
+List the 10 newest session files with a readable label and the underlying path:
+
+```bash
+~/Projects/codex-convos/list-codex-convos.sh
+```
+
+If you want direct control of the underlying Python converter, it still works:
+
+```bash
+python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
+  ~/.codex/sessions/2026/04/11/<filename>..jsonl \
+  -o ~/Projects/codex-convos/convos/session.md
+```
+
+You can also skip command history and export only the conversation:
+
+```bash
+python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
+  ~/.codex/sessions/2026/04/11/<filename>.jsonl \
+  --skip-commands \
+  -o ~/Projects/codex-convos/convos/session.md
+```
+
