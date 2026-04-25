@@ -131,10 +131,15 @@ def extract_command_names(command_text: str) -> list[str]:
     if not inner:
         return []
 
-    lexer = shlex.shlex(inner, posix=True, punctuation_chars="|;&")
-    lexer.whitespace_split = True
-    lexer.commenters = ""
-    tokens = list(lexer)
+    try:
+        lexer = shlex.shlex(inner, posix=True, punctuation_chars="|;&")
+        lexer.whitespace_split = True
+        lexer.commenters = ""
+        tokens = list(lexer)
+    except ValueError:
+        # Some archived shell commands contain truncated or intentionally awkward
+        # nested quoting. Fall back to a rough token split so export still works.
+        tokens = [token for token in re.split(r"(\|\||&&|[|;&]|\s+)", inner) if token and not token.isspace()]
 
     segments: list[list[str]] = [[]]
     separators = {"|", "||", ";", "&&"}
