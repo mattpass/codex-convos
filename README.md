@@ -62,7 +62,7 @@ function getcc() {
     local selected
     local convo_path
 
-    selected="$("$repo/list-codex-convos.sh" | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1)" || return 1
+    selected="$("$repo/list-codex-convos.sh" --days 7 | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1)" || return 1
     [[ -n "$selected" ]] || return 1
 
     convo_path="${selected##*$'\t'}"
