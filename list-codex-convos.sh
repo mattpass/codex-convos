@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-limit=10
+default_limit=1000
+default_days=14
+limit=""
 days=""
 
 while [[ $# -gt 0 ]]; do
@@ -36,10 +38,18 @@ done
 history_repo="${CODEX_HISTORY_REPO:-${HOME}/Projects/codex-history}"
 history_script="${history_repo}/history.py"
 
+if [[ -z "$days" && -z "$limit" ]]; then
+    days="$default_days"
+    limit="$default_limit"
+fi
+
 if [[ -f "$history_script" ]]; then
-    args=(list --limit "$limit")
+    args=(list)
     if [[ -n "$days" ]]; then
         args+=(--days "$days")
+    fi
+    if [[ -n "$limit" ]]; then
+        args+=(--limit "$limit")
     fi
     exec python3 "$history_script" "${args[@]}"
 fi
@@ -93,8 +103,9 @@ def label_for(path: Path) -> str:
 
 
 sessions_root = Path(sys.argv[1]).expanduser()
-limit = int(sys.argv[2])
+limit_arg = sys.argv[2]
 days_arg = sys.argv[3]
+limit = int(limit_arg) if limit_arg else None
 cutoff = None
 if days_arg:
     cutoff = datetime.now(timezone.utc) - timedelta(days=int(days_arg))
@@ -108,6 +119,6 @@ for path in sorted(sessions_root.rglob("*.jsonl"), key=lambda p: p.stat().st_mti
 
     print(f"{label_for(path)}\t{path}")
     count += 1
-    if count >= limit:
+    if limit is not None and count >= limit:
         break
 PY

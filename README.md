@@ -130,6 +130,12 @@ When `codex-history` is not present:
 - `--days N` and `--limit N` still work in that fallback mode
 - `--refresh` is accepted but has no effect in fallback mode, because there is no AI summary cache to refresh
 
+Argument behavior in both modes:
+- no `--days` and no `--limit` means `--days 14 --limit 1000`
+- `--days N` with no `--limit` means every session in the last `N` days
+- `--limit N` with no `--days` means the most recent `N` sessions with no day filter
+- `--days N --limit M` means sessions in the last `N` days capped at `M`
+
 Export the newest session within a date window:
 
 ```bash
