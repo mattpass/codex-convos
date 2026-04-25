@@ -28,8 +28,8 @@ Other more useful commands to view are not shown in a collapsed area.
 ## Repository Layout
 
 - `codex_session_to_markdown.py`: converts one Codex session `.jsonl` file into Markdown
-- `list-codex-convos.sh`: prints the 10 most recent Codex session `.jsonl` files
-- `get-codex-convo.sh`: exports a chosen session, or the newest one by default
+- `list-codex-convos.sh`: prints recent Codex session `.jsonl` files using cached AI summaries from `codex-history`
+- `get-codex-convo.sh`: exports a chosen session, or the newest matching one by default
 - `convos/`: default output directory for generated Markdown transcripts
 
 ## Requirements
@@ -37,6 +37,12 @@ Other more useful commands to view are not shown in a collapsed area.
 - Python 3
 - Codex CLI sessions already present under `~/.codex/sessions`
 - `fzf` if you want the interactive `getcc` selector function
+- optional: `codex-history` installed, by default at `~/Projects/codex-history`
+
+If `codex-history` is available, `codex-convos` uses its cached AI summaries for the picker labels.
+If it is not available, `codex-convos` falls back to the original behavior of showing the first user prompt.
+
+You can override the default `codex-history` location by setting `CODEX_HISTORY_REPO`.
 
 ## OS Compatibility
 
@@ -79,7 +85,7 @@ That shows the 10 most recent session files in `fzf`, lets you choose one, then 
 The `fzf` list is newest-first, with the newest session at the top and initially selected. The orange timestamp shown is the session file's modified time, so the displayed order matches the sort order. Each entry is shown like:
 
 ```text
-12th Apr @ 14:59:32 : When I do this and that...
+12th Apr @ 14:59:32 : Investigated ai-chat-service authorization failures across token, config, and SDK env.
 ```
 
 On selecting one of the Codex conversations it converts it to Markdown and opens it in Chrome.
@@ -110,6 +116,25 @@ List the 10 newest session files with a readable label and the underlying path:
 
 ```bash
 ~/Projects/codex-convos/list-codex-convos.sh
+~/Projects/codex-convos/list-codex-convos.sh --days 7
+~/Projects/codex-convos/list-codex-convos.sh --limit 20 --refresh
+```
+
+When `codex-history` is present:
+- `--days N` only considers sessions from the last `N` days
+- `--limit N` changes how many recent sessions are listed
+- `--refresh` forces the AI summary cache to be regenerated instead of reusing any cached summary
+
+When `codex-history` is not present:
+- `codex-convos` falls back to its original first-prompt labels
+- `--days N` and `--limit N` still work in that fallback mode
+- `--refresh` is accepted but has no effect in fallback mode, because there is no AI summary cache to refresh
+
+Export the newest session within a date window:
+
+```bash
+~/Projects/codex-convos/get-codex-convo.sh --days 7
+~/Projects/codex-convos/get-codex-convo.sh --days 30 --limit 20 --open
 ```
 
 If you want direct control of the underlying Python converter, it still works:
@@ -128,4 +153,3 @@ python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
   --skip-commands \
   -o ~/Projects/codex-convos/convos/session.md
 ```
-

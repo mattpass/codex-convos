@@ -8,6 +8,8 @@ converter="${repo_dir}/codex_session_to_markdown.py"
 list_script="${repo_dir}/list-codex-convos.sh"
 output_dir="${repo_dir}/convos"
 open_browser=0
+picker_args=()
+input_jsonl=""
 
 if [[ "${1:-}" == "--open" ]]; then
     open_browser=1
@@ -19,20 +21,42 @@ if [[ ! -f "$converter" ]]; then
     exit 1
 fi
 
-if [[ $# -gt 1 ]]; then
-    echo "Usage: get-codex-convo.sh [--open] [session.jsonl]" >&2
-    exit 1
-fi
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --limit|--days)
+            if [[ $# -lt 2 ]]; then
+                echo "Missing value for $1" >&2
+                exit 1
+            fi
+            picker_args+=("$1" "$2")
+            shift 2
+            ;;
+        --refresh)
+            picker_args+=("$1")
+            shift
+            ;;
+        -*)
+            echo "Usage: get-codex-convo.sh [--open] [session.jsonl] [--days N] [--limit N] [--refresh]" >&2
+            exit 1
+            ;;
+        *)
+            if [[ -n "$input_jsonl" ]]; then
+                echo "Usage: get-codex-convo.sh [--open] [session.jsonl] [--days N] [--limit N] [--refresh]" >&2
+                exit 1
+            fi
+            input_jsonl="$1"
+            shift
+            ;;
+    esac
+done
 
-if [[ $# -eq 1 ]]; then
-    input_jsonl="$1"
-else
+if [[ -z "$input_jsonl" ]]; then
     if [[ ! -x "$list_script" ]]; then
         echo "List script not found or not executable: $list_script" >&2
         exit 1
     fi
 
-    selected_line="$("$list_script" | head -n 1)"
+    selected_line="$("$list_script" "${picker_args[@]}" | head -n 1)"
     input_jsonl="${selected_line##*$'\t'}"
 
     if [[ -z "$input_jsonl" ]]; then

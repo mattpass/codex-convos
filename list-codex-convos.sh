@@ -2,13 +2,55 @@
 
 set -euo pipefail
 
+limit=10
+days=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --limit)
+            if [[ $# -lt 2 ]]; then
+                echo "Missing value for --limit" >&2
+                exit 1
+            fi
+            limit="$2"
+            shift 2
+            ;;
+        --days)
+            if [[ $# -lt 2 ]]; then
+                echo "Missing value for --days" >&2
+                exit 1
+            fi
+            days="$2"
+            shift 2
+            ;;
+        --refresh)
+            shift
+            ;;
+        *)
+            echo "Usage: list-codex-convos.sh [--days N] [--limit N] [--refresh]" >&2
+            exit 1
+            ;;
+    esac
+done
+
+history_repo="${CODEX_HISTORY_REPO:-${HOME}/Projects/codex-history}"
+history_script="${history_repo}/history.py"
+
+if [[ -f "$history_script" ]]; then
+    args=(list --limit "$limit")
+    if [[ -n "$days" ]]; then
+        args+=(--days "$days")
+    fi
+    exec python3 "$history_script" "${args[@]}"
+fi
+
 sessions_root="${HOME}/.codex/sessions"
 
-python3 - "$sessions_root" <<'PY'
+python3 - "$sessions_root" "$limit" "$days" <<'PY'
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ORANGE = "\033[38;5;208m"
@@ -51,8 +93,21 @@ def label_for(path: Path) -> str:
 
 
 sessions_root = Path(sys.argv[1]).expanduser()
-paths = sorted(sessions_root.rglob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)[:10]
+limit = int(sys.argv[2])
+days_arg = sys.argv[3]
+cutoff = None
+if days_arg:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=int(days_arg))
 
-for path in paths:
+count = 0
+for path in sorted(sessions_root.rglob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
+    if cutoff is not None:
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+        if mtime < cutoff:
+            continue
+
     print(f"{label_for(path)}\t{path}")
+    count += 1
+    if count >= limit:
+        break
 PY
