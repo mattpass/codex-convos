@@ -30,7 +30,7 @@ Other more useful commands to view are not shown in a collapsed area.
 - `codex_session_to_markdown.py`: converts one Codex session `.jsonl` file into Markdown
 - `list-codex-convos.sh`: prints recent Codex session `.jsonl` files using cached AI summaries from `codex-history`
 - `get-codex-convo.sh`: exports a chosen session, or the newest matching one by default
-- `convos/`: default output directory for generated Markdown transcripts
+- `~/.cache/codex-convos/convos/`: default output directory for generated Markdown transcripts
 
 ## Requirements
 
@@ -79,7 +79,7 @@ getcc
 That shows the 10 most recent session files in `fzf`, lets you choose one, then exports it to:
 
 ```text
-~/Projects/codex-convos/convos/<same-session-name>.md
+~/.cache/codex-convos/convos/<same-session-name>.md
 ```
 
 The `fzf` list is newest-first, with the newest session at the top and initially selected. The orange timestamp shown is the session file's modified time, so the displayed order matches the sort order. Each entry is shown like:
@@ -148,7 +148,7 @@ If you want direct control of the underlying Python converter, it still works:
 ```bash
 python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
   ~/.codex/sessions/2026/04/11/<filename>.jsonl \
-  -o ~/Projects/codex-convos/convos/session.md
+  -o ~/.cache/codex-convos/convos/session.md
 ```
 
 You can also skip command history and export only the conversation:
@@ -157,5 +157,5 @@ You can also skip command history and export only the conversation:
 python3 ~/Projects/codex-convos/codex_session_to_markdown.py \
   ~/.codex/sessions/2026/04/11/<filename>.jsonl \
   --skip-commands \
-  -o ~/Projects/codex-convos/convos/session.md
+  -o ~/.cache/codex-convos/convos/session.md
 ```
