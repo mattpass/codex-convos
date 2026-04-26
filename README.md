@@ -30,6 +30,7 @@ Other more useful commands to view are not shown in a collapsed area.
 - `codex_session_to_markdown.py`: converts one Codex session `.jsonl` file into Markdown
 - `list-codex-convos.sh`: prints recent Codex session `.jsonl` files using cached AI summaries from `codex-history`
 - `get-codex-convo.sh`: exports a chosen session, or the newest matching one by default
+- `list-and-open-codex-convo.sh`: interactive `fzf` picker that exports the selected session and opens it
 - `~/.cache/codex-convos/convos/`: default output directory for generated Markdown transcripts
 
 ## Requirements
@@ -58,15 +59,7 @@ Add this to your shell config, for example `~/.bashrc` or `~/.zshrc` and change 
 
 ```bash
 function getcc() {
-    local repo=~/Projects/codex-convos
-    local selected
-    local convo_path
-
-    selected="$("$repo/list-codex-convos.sh" --days 7 | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1)" || return 1
-    [[ -n "$selected" ]] || return 1
-
-    convo_path="${selected##*$'\t'}"
-    "$repo/get-codex-convo.sh" --open "$convo_path"
+    ~/Projects/codex-convos/list-and-open-codex-convo.sh --days 14
 }
 ```
 
@@ -89,6 +82,13 @@ The `fzf` list is newest-first, with the newest session at the top and initially
 ```
 
 On selecting one of the Codex conversations it converts it to Markdown and opens it in Chrome.
+
+You can also run the wrapper directly:
+
+```bash
+~/Projects/codex-convos/list-and-open-codex-convo.sh --days 14
+~/Projects/codex-convos/list-and-open-codex-convo.sh --days 30 --limit 50
+```
 
 ## Basic Usage - Individual Files
 
