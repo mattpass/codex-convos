@@ -81,6 +81,8 @@ The `fzf` list is newest-first, with the newest session at the top and initially
 12th Apr @ 14:59:32 : Investigated ai-chat-service authorization failures across token, config, and SDK env.
 ```
 
+The picker adds one blank display line between local Monday-Sunday weeks.
+
 On selecting one of the Codex conversations it converts it to Markdown and opens it in Chrome.
 
 You can also run the wrapper directly:
@@ -118,17 +120,20 @@ List the 10 newest session files with a readable label and the underlying path:
 ~/Projects/codex-convos/list-codex-convos.sh
 ~/Projects/codex-convos/list-codex-convos.sh --days 7
 ~/Projects/codex-convos/list-codex-convos.sh --limit 20 --refresh
+~/Projects/codex-convos/list-codex-convos.sh --week-breaks
 ```
 
 When `codex-history` is present:
 - `--days N` only considers sessions from the last `N` days
 - `--limit N` changes how many recent sessions are listed
 - `--refresh` forces the AI summary cache to be regenerated instead of reusing any cached summary
+- `--week-breaks` inserts one blank display line between local Monday-Sunday weeks
 
 When `codex-history` is not present:
 - `codex-convos` falls back to its original first-prompt labels
 - `--days N` and `--limit N` still work in that fallback mode
 - `--refresh` is accepted but has no effect in fallback mode, because there is no AI summary cache to refresh
+- `--week-breaks` still inserts one blank display line between local Monday-Sunday weeks
 
 Argument behavior in both modes:
 - no `--days` and no `--limit` means `--days 14 --limit 1000`

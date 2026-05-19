@@ -21,8 +21,14 @@ if ! command -v fzf >/dev/null 2>&1; then
     exit 1
 fi
 
-selected="$("$list_script" "$@" | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1)" || exit 1
+skip_blank_bind='focus:transform:[[ -n {} ]] && echo ignore || { [[ "$FZF_KEY" == "up" ]] && echo up || echo down; }'
+selected="$("$list_script" --week-breaks "$@" | fzf --ansi --no-sort --layout=reverse-list --delimiter=$'\t' --with-nth=1 --bind="$skip_blank_bind")" || exit 1
 [[ -n "$selected" ]] || exit 1
+
+if [[ "$selected" != *$'\t'* ]]; then
+    echo "No session selected." >&2
+    exit 1
+fi
 
 convo_path="${selected##*$'\t'}"
 exec "$get_script" --open "$convo_path"

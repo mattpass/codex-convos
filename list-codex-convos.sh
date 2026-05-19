@@ -6,6 +6,8 @@ default_limit=1000
 default_days=14
 limit=""
 days=""
+refresh=0
+week_breaks=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -26,10 +28,15 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --refresh)
+            refresh=1
+            shift
+            ;;
+        --week-breaks)
+            week_breaks=1
             shift
             ;;
         *)
-            echo "Usage: list-codex-convos.sh [--days N] [--limit N] [--refresh]" >&2
+            echo "Usage: list-codex-convos.sh [--days N] [--limit N] [--refresh] [--week-breaks]" >&2
             exit 1
             ;;
     esac
@@ -51,12 +58,18 @@ if [[ -f "$history_script" ]]; then
     if [[ -n "$limit" ]]; then
         args+=(--limit "$limit")
     fi
+    if [[ "$refresh" -eq 1 ]]; then
+        args+=(--refresh)
+    fi
+    if [[ "$week_breaks" -eq 1 ]]; then
+        args+=(--week-breaks)
+    fi
     exec python3 "$history_script" "${args[@]}"
 fi
 
 sessions_root="${HOME}/.codex/sessions"
 
-python3 - "$sessions_root" "$limit" "$days" <<'PY'
+python3 - "$sessions_root" "$limit" "$days" "$week_breaks" <<'PY'
 import json
 import re
 import sys
@@ -102,20 +115,33 @@ def label_for(path: Path) -> str:
     return f"{ORANGE}{date_part}{RESET}"
 
 
+def week_key(path: Path):
+    dt = datetime.fromtimestamp(path.stat().st_mtime).astimezone()
+    year, week, _ = dt.isocalendar()
+    return year, week
+
+
 sessions_root = Path(sys.argv[1]).expanduser()
 limit_arg = sys.argv[2]
 days_arg = sys.argv[3]
+week_breaks = sys.argv[4] == "1"
 limit = int(limit_arg) if limit_arg else None
 cutoff = None
 if days_arg:
     cutoff = datetime.now(timezone.utc) - timedelta(days=int(days_arg))
 
 count = 0
+previous_week = None
 for path in sorted(sessions_root.rglob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
     if cutoff is not None:
         mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
         if mtime < cutoff:
             continue
+
+    current_week = week_key(path)
+    if week_breaks and previous_week is not None and current_week != previous_week:
+        print()
+    previous_week = current_week
 
     print(f"{label_for(path)}\t{path}")
     count += 1
